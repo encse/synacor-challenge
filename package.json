@@ -1,0 +1,32 @@
+{
+  "name": "uucp",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "compile": "npx tsc",
+    "start": "npm run compile && node -r esm build/index.js",
+    "test": "npm run compile && npx ts-mocha src/test/**/*.ts"
+  },
+  "author": "",
+  "license": "ISC",
+  "dependencies": {
+    "@types/node": "^14.0.13",
+    "esm": "^3.2.25",
+    "intellij-ts-mocha": "git+https://github.com/bjstar/intellij-ts-mocha.git",
+    "readline-promise": "^1.0.4",
+    "readline-sync": "^1.4.10",
+    "typescript": "^3.9.5"
+  },
+  "devDependencies": {
+    "@types/chai": "^4.2.12",
+    "@types/expect": "^24.3.0",
+    "@types/mocha": "^8.0.1",
+    "@types/sinon": "^9.0.4",
+    "chai": "^4.2.0",
+    "expect": "^26.2.0",
+    "mocha": "^8.1.0",
+    "sinon": "^9.0.2",
+    "ts-mocha": "^7.0.0"
+  }
+}
