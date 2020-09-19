@@ -1,110 +1,168 @@
 import * as fs from "fs";
 
+type Env = {
+	stop: boolean,
+	break: boolean,
+	memory: Uint16Array,
+	ip: number,
+	addr1: number,
+	val1: number,
+	val2: number,
+	val3: number,
+	push: (v: number) => void,
+	pop: () => number,
+	input: string,
+	output: string,
+};
 
-function asm(strings: TemplateStringsArray, ...args: number[]): {st: string, length: number}  {
-	let str = '';
-	strings.forEach((string, i) => {
-		str += string;
-		if (args[i] != null) {
-			str += (args[i] < 32768 ? args[i].toString(16) : "abcdefgh"[args[i]-32768]+'x');
+const cmd = (asm: string, step: (env: Env) => void) => {
+	return { asm, step };
+};
+
+const cmds = [
+	cmd("break", (env) => {
+		env.stop = true;
+	}),
+	cmd("set <arg1> <arg2>", (env) => {
+		env.memory[env.addr1] = env.val2;
+		env.ip += 3;
+	}),
+
+	cmd("push <arg1>", (env) => {
+		env.push(env.val1);
+		env.ip += 2;
+	}),
+
+	cmd("pop <arg1>", (env) => {
+		env.memory[env.addr1] = env.pop();
+		env.ip += 2;
+	}),
+
+	cmd("eq <arg1> <arg2> <arg3>", (env) => {
+		env.memory[env.addr1] = env.val2 === env.val3 ? 1 : 0;
+		env.ip += 4;
+	}),
+
+	cmd("gt <arg1> <arg2> <arg3>", (env) => {
+		env.memory[env.addr1] = env.val2 > env.val3 ? 1 : 0;
+		env.ip += 4;
+	}),
+
+	cmd("jmp <arg1>", (env) => {
+		env.ip = env.val1;
+	}),
+
+	cmd("jt <arg1> <arg2>", (env) => {
+		env.ip = env.val1 != 0 ? env.val2 : env.ip + 3;
+	}),
+
+	cmd("jf <arg1> <arg2>", (env) => {
+		env.ip = env.val1 == 0 ? env.val2 : env.ip + 3;
+	}),
+
+	cmd("add <arg1> <arg2> <arg3>", (env) => {
+		env.memory[env.addr1] = (env.val2 + env.val3)  & 32767;
+		env.ip += 4;
+	}),
+
+	cmd("mul <arg1> <arg2> <arg3>", (env) => {
+		env.memory[env.addr1] = (env.val2 * env.val3)  & 32767;
+		env.ip += 4;
+	}),
+
+	cmd("mod <arg1> <arg2> <arg3>", (env) => {
+		env.memory[env.addr1] = (env.val2 % env.val3)  & 32767;
+		env.ip += 4;
+	}),
+
+	cmd("and <arg1> <arg2> <arg3>", (env) => {
+		env.memory[env.addr1] = (env.val2 & env.val3)  & 32767;
+		env.ip += 4;
+	}),
+
+	cmd("or <arg1> <arg2> <arg3>", (env) => {
+		env.memory[env.addr1] = (env.val2 | env.val3)  & 32767;
+		env.ip += 4;
+	}),
+
+	cmd("not <arg1> <arg2>", (env) => {
+		env.memory[env.addr1] = ~env.val2 & 32767;
+		env.ip += 3;
+	}),
+
+	cmd("rmem <arg1> <arg2>", (env) => {
+		env.memory[env.addr1] = env.memory[env.val2];
+		env.ip += 3;
+	}),
+
+	cmd("wmem <arg1> <arg2>", (env) => {
+		env.memory[env.val1] = env.val2;
+		env.ip += 3;
+	}),
+
+	cmd("call <arg1>", (env) => {
+		env.push(env.ip + 2);
+		env.ip = env.val1;
+	}),
+
+	cmd("ret", (env) => {
+		env.ip = env.pop();
+	}),
+
+	cmd("out <arg1>", (env) => {
+		env.output += String.fromCharCode(env.val1);
+		env.ip += 2;
+	}),
+
+	cmd("in <arg1>", (env) => {
+		if(env.input.length > 0){
+			env.memory[env.addr1] = env.input.charCodeAt(0);
+			env.input = env.input.substring(1);
+			env.ip += 2;
+		} else {
+			env.break = true;
 		}
-	});
-	return {st: str, length: args.length +1};
-}
+	}),
 
-
+	cmd("nop", (env) => {
+		env.ip++;
+	}),
+];
 
 export class Machine {
 	public readonly memory: Uint16Array;
 	public tracing = false;
 
-	get ax(): number {
-		return this.memory[0x8000];
-	}
+	get ax(): number { return this.memory[0x8000]; }
+	set ax(num: number) { this.memory[0x8000] = num; }
 
-	set ax(num: number) {
-		this.memory[0x8000] = num;
-	}
+	get bx(): number { return this.memory[0x8001]; }
+	set bx(num: number) { this.memory[0x8001] = num; }
 
-	get bx(): number {
-		return this.memory[0x8001];
-	}
+	get cx(): number { return this.memory[0x8002]; }
+	set cx(num: number) { this.memory[0x8002] = num; }
 
-	set bx(num: number) {
-		this.memory[0x8001] = num;
-	}
+	get dx(): number { return this.memory[0x8003]; }
+	set dx(num: number) { this.memory[0x8003] = num; }
 
-	get cx(): number {
-		return this.memory[0x8002];
-	}
+	get ex(): number { return this.memory[0x8004]; }
+	set ex(num: number) { this.memory[0x8004] = num; }
 
-	set cx(num: number) {
-		this.memory[0x8002] = num;
-	}
+	get fx(): number { return this.memory[0x8005]; }
+	set fx(num: number) { this.memory[0x8005] = num; }
 
-	get dx(): number {
-		return this.memory[0x8003];
-	}
+	get gx(): number { return this.memory[0x8006]; }
+	set gx(num: number) { this.memory[0x8006] = num; }
 
-	set dx(num: number) {
-		this.memory[0x8003] = num;
-	}
+	get hx(): number { return this.memory[0x8007]; }
+	set hx(num: number) { this.memory[0x8007] = num; }
 
-	get ex(): number {
-		return this.memory[0x8004];
-	}
+	get ip(): number { return this.memory[0x8008]; }
+	set ip(num: number) { this.memory[0x8008] = num; }
 
-	set ex(num: number) {
-		this.memory[0x8004] = num;
-	}
+	get sp(): number { return this.memory[0x8009]; }
+	set sp(num: number) { this.memory[0x8009] = num; }
 
-	get fx(): number {
-		return this.memory[0x8005];
-	}
-
-	set fx(num: number) {
-		this.memory[0x8005] = num;
-	}
-
-	get gx(): number {
-		return this.memory[0x8006];
-	}
-
-	set gx(num: number) {
-		this.memory[0x8006] = num;
-	}
-
-	get hx(): number {
-		return this.memory[0x8007];
-	}
-
-	set hx(num: number) {
-		this.memory[0x8007] = num;
-	}
-
-	get ip(): number {
-		return this.memory[0x8008];
-	}
-
-	set ip(num: number) {
-		this.memory[0x8008] = num;
-	}
-
-	get sp(): number {
-		return this.memory[0x8009];
-	}
-
-	set sp(num: number) {
-		this.memory[0x8009] = num;
-	}
-
-	push(val: number): void {
-		this.memory[this.sp--] = val;
-	}
-
-	pop(): number {
-		return this.memory[++this.sp];
-	}
 
 	constructor() {
 		this.memory = new Uint16Array(65536);
@@ -122,112 +180,52 @@ export class Machine {
 		this.memory.set(challenge, 0);
 	}
 
-	private read(num: number): number {
-		const val = this.memory[num];
-		return val < 32768 ? val : this.memory[val];
-	}
-
-
 	public run(input: string): { output: string, stop: boolean } {
 
-		let output: string = '';
+		const read = (addr: number) => {
+			const val = this.memory[addr];
+			return val < 32768 ? val : this.memory[val];
+		};
 
+
+		let output = '';
 		while (true) {
-			let cmd = (this.memory)[this.ip];
-			let arg1 = (this.memory)[this.ip + 1];
+
+			const env: Env = {
+				output: output,
+				input: input,
+				addr1: this.memory[this.ip + 1],
+				val1: read(this.ip + 1),
+				val2: read(this.ip + 2),
+				val3: read(this.ip + 3),
+				break: false,
+				ip: this.ip,
+				memory: this.memory,
+				pop: () => this.memory[++this.sp],
+				push: val => this.memory[this.sp--] = val,
+				stop: false,
+			};
+
 			if (this.tracing) {
-				this.disasm(this.ip, 1);
+				env.output += this.disasm(env.ip, 1);
 			}
-			switch (cmd) {
-				case 0:
-					return {output, stop: true};
-				case 1:
-					(this.memory)[arg1] = this.read(this.ip + 2);
-					this.ip += 3;
-					break;
-				case 2:
-					this.push(this.read(this.ip + 1));
-					this.ip += 2;
-					break;
-				case 3:
-					(this.memory)[arg1] = this.pop();
-					this.ip += 2;
-					break;
-				case 4:
-					(this.memory)[arg1] = this.read(this.ip + 2) == this.read(this.ip + 3) ? 1 : 0;
-					this.ip += 4;
-					break;
-				case 5:
-					(this.memory)[arg1] = this.read(this.ip + 2) > this.read(this.ip + 3) ? 1 : 0;
-					this.ip += 4;
-					break;
-				case 6:
-					this.ip = this.read(this.ip + 1);
-					break;
-				case 7:
-					this.ip = this.read(this.ip + 1) != 0 ? this.read(this.ip + 2) : this.ip + 3;
-					break;
-				case 8:
-					this.ip = this.read(this.ip + 1) == 0 ? this.read(this.ip + 2) : this.ip + 3;
-					break;
-				case 9:
-					(this.memory)[arg1] = (this.read(this.ip + 2) + this.read(this.ip + 3)) & 32767;
-					this.ip += 4;
-					break;
-				case 10:
-					(this.memory)[arg1] = (this.read(this.ip + 2) * this.read(this.ip + 3)) & 32767;
-					this.ip += 4;
-					break;
-				case 11:
-					(this.memory)[arg1] = (this.read(this.ip + 2) % this.read(this.ip + 3)) & 32767;
-					this.ip += 4;
-					break;
-				case 12:
-					(this.memory)[arg1] = (this.read(this.ip + 2) & this.read(this.ip + 3)) & 32767;
-					this.ip += 4;
-					break;
-				case 13:
-					(this.memory)[arg1] = (this.read(this.ip + 2) | this.read(this.ip + 3)) & 32767;
-					this.ip += 4;
-					break;
-				case 14:
-					(this.memory)[arg1] = ~this.read(this.ip + 2) & 32767;
-					this.ip += 3;
-					break;
-				case 15:
-					(this.memory)[arg1] = (this.memory)[(this.read(this.ip + 2))];
-					this.ip += 3;
-					break;
-				case 16:
-					(this.memory)[(this.read(this.ip + 1))] = this.read(this.ip + 2);
-					this.ip += 3;
-					break;
-				case 17:
-					this.push(this.ip + 2);
-					this.ip = this.read(this.ip + 1);
-					break;
-				case 18:
-					this.ip = this.pop();
-					break;
-				case 19:
-					output += String.fromCharCode(this.read(this.ip + 1));
-					this.ip += 2;
-					break;
-				case 20:
-					if (input.length > 0) {
-						(this.memory)[arg1] = input.charCodeAt(0);
-						input = input.substring(1);
-						this.ip += 2;
-					} else {
-						return {output, stop: false};
-					}
-					break;
-				case 21:
-					this.ip++;
-					break;
-				default:
-					console.error("invalid instruction", cmd);
-					return {output, stop: true};
+
+			let op = this.memory[env.ip];
+			const cmd = cmds[op];
+			if (cmd == null) {
+				output += `invalid instruction ${op} at ${env.ip.toString(16)}\n`;
+				return {output: output, stop: true};
+			} else {
+				cmd.step(env);
+				this.ip = env.ip;
+				output = env.output;
+				input = env.input;
+
+				if (env.stop) {
+					return {output: env.output, stop: true};
+				} else if (env.break) {
+					return {output: env.output, stop: false};
+				}
 			}
 		}
 	}
@@ -235,86 +233,18 @@ export class Machine {
 	public disasm(ip: number, length: number): string {
 
 		let res = '';
-		for (let i = 0; i < length; i++) {
-			let cmd = (this.memory)[ip];
-			let arg1 = (this.memory)[ip + 1];
-			let arg2 = (this.memory)[ip + 2];
-			let arg3 = (this.memory)[ip + 3];
-			let asmString: { st: string, length: number };
-			switch (cmd) {
-				case 0:
-					asmString = asm`break`;
-					break;
-				case 1:
-					asmString = asm`set ${arg1} ${arg2}`;
-					break;
-				case 2:
-					asmString = asm`push ${arg1}`;
-					break;
-				case 3:
-					asmString = asm`pop ${arg1}`;
-					break;
-				case 4:
-					asmString = asm`eq ${arg1} ${arg2} ${arg3}`;
-					break;
-				case 5:
-					asmString = asm`gt ${arg1} ${arg2} ${arg3}`;
-					break;
-				case 6:
-					asmString = asm`jmp ${arg1}`;
-					break;
-				case 7:
-					asmString = asm`jt ${arg1} ${arg2}`;
-					break;
-				case 8:
-					asmString = asm`jf ${arg1} ${arg2}`;
-					break;
-				case 9:
-					asmString = asm`add ${arg1} ${arg2} ${arg3}`;
-					break;
-				case 10:
-					asmString = asm`mul ${arg1} ${arg2} ${arg3}`;
-					break;
-				case 11:
-					asmString = asm`mod ${arg1} ${arg2} ${arg3}`;
-					break;
-				case 12:
-					asmString = asm`and ${arg1} ${arg2} ${arg3}`;
-					break;
-				case 13:
-					asmString = asm`or ${arg1} ${arg2} ${arg3}`;
-					break;
-				case 14:
-					asmString = asm`not ${arg1} ${arg2}`;
-					break;
-				case 15:
-					asmString = asm`rmem ${arg1} ${arg2}`;
-					break;
-				case 16:
-					asmString = asm`wmem ${arg1} ${arg2}`;
-					break;
-				case 17:
-					asmString = asm`call ${arg1}`;
-					break;
-				case 18:
-					asmString = asm`ret`;
-					break;
-				case 19:
-					asmString = asm`out ${arg1}`;
-					break;
-				case 20:
-					asmString = asm`in ${arg1}`;
-					break;
-				case 21:
-					asmString = asm`nop`;
-					break;
-				default:
-					asmString = {st: cmd.toString(10), length: 1};
-					break;
-			}
+		const stArg = (x: number) => (x < 32768 ? '0x' + x.toString(16) : "abcdefgh"[x-32768]+'x');
 
-			res += `0x${ip.toString(16).padStart(4, '0')} ${asmString.st}\n`;
-			ip += asmString.length;
+		for (let i = 0; i < length; i++) {
+			const op = this.memory[ip];
+			const cmdTemplate = cmds[op]?.asm ?? op.toString(10);
+			const cmd = cmdTemplate
+				.replace("<arg3>", stArg(this.memory[ip+3]))
+				.replace("<arg2>", stArg(this.memory[ip+2]))
+				.replace("<arg1>", stArg(this.memory[ip+1]));
+
+			res += `0x${ip.toString(16).padStart(4, '0')} ${cmd}\n`;
+			ip += cmdTemplate.split(' ').length;
 		}
 		return res;
 	}

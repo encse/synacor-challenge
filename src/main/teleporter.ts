@@ -3,18 +3,18 @@ import {Machine} from "./machine";
 
 export function hackTeleporter(writer: Writer, machine: Machine) {
 	const createA = (h: number): number[][] => {
-		let A:number[][] = [];
-		for (let m=0;m<0x5;m++) {
-			let row:number[] = [];
+		let A: number[][] = [];
+		for (let m = 0; m < 0x5; m++) {
+			let row: number[] = [];
 			A[m] = row;
-			for (let n=0;n<0x8000;n++) {
+			for (let n = 0; n < 0x8000; n++) {
 				if (m == 4 && n == 2) {
 					return A;
 				}
 				if (m == 0) {
 					row.push((n + 1) & 0x7fff);
-				} else if(n == 0){
-					row.push(A[m-1][h]);
+				} else if (n == 0) {
+					row.push(A[m - 1][h]);
 				} else {
 					row.push(A[m - 1][A[m][n - 1]]);
 				}
@@ -53,7 +53,7 @@ export function hackTeleporter(writer: Writer, machine: Machine) {
 		| Searching for seed...
 	`);
 
-	for (let hx=0; hx <= 0xffff; hx++) {
+	for (let hx = 0; hx <= 0xffff; hx++) {
 		const A = createA(hx);
 		writer.write(`\rhx = 0x${hx.toString(16)}`);
 
