@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "compile": "npx tsc",
-    "start": "npm run compile && node -r esm build/index.js",
+    "start": "npm run compile && node --stack-size=2000000000 -r esm build/index.js ",
     "test": "npm run compile && npx ts-mocha src/test/**/*.ts"
   },
   "author": "",
@@ -16,7 +16,7 @@
     "intellij-ts-mocha": "git+https://github.com/bjstar/intellij-ts-mocha.git",
     "readline-promise": "^1.0.4",
     "readline-sync": "^1.4.10",
-    "typescript": "^3.9.5"
+    "typescript": "^4.0.2"
   },
   "devDependencies": {
     "@types/chai": "^4.2.12",
