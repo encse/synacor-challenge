@@ -38,23 +38,41 @@ export function stripMargin(strings: TemplateStringsArray, ...values: any[]): st
 
 export class Writer {
 
-	constructor(private getHighlight: () => string[]) {
+	constructor(private getWordsToHighlight: () => string[]) {
 	}
 
 	public writeln(st: string) {
 		this.write(st + '\n');
 	}
-
 	public write(chars: string): void {
+
 		const lines = chars.split('\n');
+		for(let i =0;i<lines.length;i++) {
+			let line = lines[i];
+			let ichSpace = 0;
+			for (let ich = 0; ich < line.length; ich++) {
+				if (line[ich] == ' ') {
+					ichSpace = ich;
+				}
+				if (ich > 80) {
+					if (ichSpace > 0) {
+						lines.splice(i + 1, 0, line.substring(ichSpace+1));
+						lines[i] = line.substring(0, ichSpace).trimRight();
+					}
+					break;
+				}
+			}
+		}
 		for (let i = 0; i < lines.length; i++) {
 			let line = lines[i];
 			if (line.startsWith("==")) {
 				line = bold`${line}`;
 			}
-			for (const keyword of this.getHighlight()) {
-				line = line.replace(new RegExp("\\b" + keyword + "\\b", "g"), bold`${keyword}`);
+
+			for (const word of this.getWordsToHighlight()) {
+				line = line.replace(new RegExp(`\\b${word}\\b`, "g"), bold`${word}`);
 			}
+
 			if (i < lines.length - 1) {
 				line += '\n';
 				for (let i=0;i<10000000;i++){
@@ -64,5 +82,4 @@ export class Writer {
 			process.stdout.write(line);
 		}
 	}
-
 }

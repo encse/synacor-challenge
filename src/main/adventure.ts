@@ -1,29 +1,30 @@
-import {blue, cyan, inverse, stripMargin, white, Writer} from "./writer";
-import {Reader} from "./reader";
-import {Cmd, command} from "./command";
-import {Machine} from "./machine";
-import {solveVault} from "./maze";
-import {hackTeleporter} from "./teleporter";
-import {solveCoins} from "./coins";
+import {cyan, inverse, Writer} from "./io/writer";
+import {Reader} from "./io/reader";
+import {Cmd, command} from "./commands/command";
+import {SynachorVm} from "./vm/synachorVm";
+import {save} from "./commands/save";
+import {load} from "./commands/load";
+import {solve} from "./commands/solve";
+import {disasm} from "./commands/disasm";
 
-const verbs = "use take drop help inv look go save load disasm teleporter vault coins".split(" ");
+const verbs = "use take drop help inv look go".split(" ");
 
 export class Adventure {
-	public things: string[] = [];
-	public location: string = "";
+	private things: string[] = [];
+	private location: string = "";
 	private readonly writer: Writer;
 	private readonly reader: Reader;
-	private readonly machine: Machine;
+	private readonly synachorVm: SynachorVm;
 
 	private readonly commands: Cmd[];
 
 	constructor(private challenge: string) {
 
-		this.machine = new Machine();
-		this.machine.load(challenge);
+		this.synachorVm = new SynachorVm();
+		this.synachorVm.load(challenge);
 
-		this.writer = new Writer(() =>
-			[...this.things, ...verbs, "Grue", "grue"]
+		this.writer = new Writer(
+			() => [...this.things, ...verbs, ...this.commands.map(command => command.name), "Grue", "grue"]
 		);
 
 		this.reader = new Reader(() => [
@@ -33,60 +34,12 @@ export class Adventure {
 		]);
 
 		this.commands = [
-			command(["!save", "<string>"], (file) => {
-				this.machine.save(file);
-				this.writer.writeln("\n\nSaved.\n\nWhat do you do?");
-				this.updateState();
-			}),
-			command(["!load", "<string>"], (file) => {
-				this.machine.load(file);
-				this.writer.writeln("\n\nLoaded.\n\nWhat do you do?");
-				this.updateState();
-			}),
-
-			command(["!disasm", "<number>", "<number>"], (line, length) => {
-				this.writer.writeln(this.machine.disasm(line, length));
-				this.updateState();
-			}),
-
-			command(["!vault"], () => {
-				solveVault(this.writer, this.location);
-				this.updateState();
-			}),
-
-			command(["!teleporter"], () => {
-				hackTeleporter(this.writer, this.location, this.things, this.machine);
-				this.updateState();
-			}),
-
-			command(["!coins"], () => {
-				solveCoins(this.writer, this.location, this.things);
-				this.updateState();
-			}),
-
-			command(["help"], () => {
-				this.writer.writeln(stripMargin`
-				| 
-				| 
-				| !load <file.bin>
-				| 
-				| Load your progress from a .bin file.
-				| !save <file.bin>
-				| 
-				| Save your progress.
-				| !disasm <address> <length>
-				| 
-				| Disassemble the VM's memory.
-				| !vault
-				| 
-				| Solve the vault challenge.
-				| !teleporter
-				| 
-				| Solve the teleporter challenge.
-				| !coins
-				| 
-				| Solve the coins challenge.
-				`);
+			save,
+			load,
+			solve,
+			disasm,
+			command(["help"], "This message.", () => {
+				this.writer.write(this.commands.map(command => `${command.name}\n\n${command.help}\n`).join(""));
 				this.runMachine("help\n");
 			})
 		];
@@ -98,16 +51,24 @@ export class Adventure {
 
 			const line = (await this.reader.question(`${inverse`${cyan` ${this.location} `}`}${cyan`\u25B6`} `)) + "\n";
 
-			if (!this.commands.some(command => command.do(line)) && !this.runMachine(line)) {
+			const env = {writer: this.writer, things: this.things, synachorVm: this.synachorVm, location: this.location};
+			let found = this.commands.some(command => command.do(env, line));
+			if (found) {
+				if (line !== "help\n") {
+					this.writer.writeln("\nWhat do you do?");
+				}
+				this.updateState();
+			} else if (this.runMachine(line)) {
+				//
+			} else {
 				break;
-
 			}
 		}
 	}
 
 	private updateState() {
 		this.things = [];
-		for (const st of this.machine.run("look\ninv\n").output.split("\n")) {
+		for (const st of this.synachorVm.run("look\ninv\n").output.split("\n")) {
 			let rxThing = st.match(/- (.*)/);
 			if (rxThing) {
 				this.things.push(rxThing[1]);
@@ -120,12 +81,12 @@ export class Adventure {
 	}
 
 	private runMachine(line: string) {
-		const res = this.machine.run(line);
+		const res = this.synachorVm.run(line);
 		if (!res.stop) {
 			this.updateState();
 		}
 
-		this.writer.write(res.output.replace(/  /g, "\n"));
+		this.writer.write(res.output);
 
 		return !res.stop;
 	}

@@ -1,14 +1,27 @@
+import {Writer} from "../io/writer";
+import {SynachorVm} from "../vm/synachorVm";
+
+type Env = {
+	readonly writer: Writer,
+	readonly things: string[],
+	readonly location: string,
+	readonly synachorVm: SynachorVm,
+}
 
 type CmdArg = "<number>" | "<string>"
-type MapArg<V> =  V extends "<number>" ? number : V extends "<string>" ? string : never;
+type MapArg<V> =
+	V extends "<number>" ? number :
+	V extends "<string>" ? string :
+	never;
 
 type MapArgs<Tuple extends [...any[]]> =  {[Index in keyof Tuple]: MapArg<Tuple[Index]>;}
 
-export type Cmd = {name: string, do: (line: string) => boolean};
+export type Cmd= {name: string, help: string, do: (env: Env, line: string) => boolean};
 
 export function command<K extends CmdArg[]>(
 	regex: [string, ...K],
-	on: (...args: [...MapArgs<K>]) => void
+	help: string,
+	on: (env: Env, ...args: [...MapArgs<K>]) => void
 ): Cmd {
 	const matchString = new RegExp(
 		"^" +
@@ -24,7 +37,8 @@ export function command<K extends CmdArg[]>(
 
 	return {
 		name: regex[0],
-		do: (line) => {
+		help,
+		do: (env, line) => {
 
 			const match = line.match(matchString);
 			if (match != null) {
@@ -36,7 +50,7 @@ export function command<K extends CmdArg[]>(
 					}
 				});
 				try {
-					(on as any)(...args);
+					(on as any)(env, ...args);
 				} catch (e) {
 					console.error(e);
 				}

@@ -1,4 +1,5 @@
-import {bold, green, stripMargin, white, Writer} from "./writer";
+import {bold, green, stripMargin, Writer} from "../io/writer";
+import {checkPrecondition} from "./check";
 
 function* perm<T>(ts: T[]): Iterable<T[]> {
 	if (ts.length == 0) {
@@ -14,12 +15,11 @@ function* perm<T>(ts: T[]): Iterable<T[]> {
 
 export function solveCoins(writer: Writer, location: string, things: string[]) {
 
-	if (location !== "Ruins" ||
-		["red coin", "corroded coin", "shiny coin", "concave coin", "blue coin"].some(coin => things.indexOf(coin) < 0)
-	) {
-		writer.writeln("");
-		writer.writeln("");
-		writer.writeln("You dont know what to do.");
+	if(!checkPrecondition(
+		location, ["Ruins"],
+		things, ["red coin", "corroded coin", "shiny coin", "concave coin", "blue coin"],
+		writer
+	)) {
 		return;
 	}
 

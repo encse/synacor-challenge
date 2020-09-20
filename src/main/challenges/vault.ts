@@ -1,10 +1,13 @@
-import {stripMargin, Writer} from "./writer";
+import {stripMargin, Writer} from "../io/writer";
+import {checkPrecondition} from "./check";
 
 export function solveVault(writer: Writer, location: string) {
-	if (location !== "Vault Lock" && location !== "Vault Antechamber" && location !== "Vault Door"){
-		writer.writeln("");
-		writer.writeln("");
-		writer.writeln("You dont know what to do.");
+
+	if (!checkPrecondition(
+		location, ["Vault Lock", "Vault Antechamber", "Vault Door"],
+		[], [],
+		writer
+	)) {
 		return;
 	}
 
@@ -33,9 +36,10 @@ export function solveVault(writer: Writer, location: string) {
 
 	writer.writeln(stripMargin`
 		| 
-		| The vault is like a big calculator device. The orb stores the current value. Initially it is set to 22 and modified as you walk around.
+		| It looks like the vault is a big calculator device. The orb stores the current value. Initially it is set to 22 and modified as you walk around.
 		| 
 		| With some trial and error you find the shortest path that ends at the Vault Door with the value 30.
+		| 
 		| You need to go:
 	`);
 
