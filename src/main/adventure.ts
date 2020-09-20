@@ -1,11 +1,12 @@
-import {Writer} from "./writer";
+import {blue, cyan, inverse, stripMargin, white, Writer} from "./writer";
 import {Reader} from "./reader";
 import {Cmd, command} from "./command";
 import {Machine} from "./machine";
-import {solveMaze} from "./maze";
+import {solveVault} from "./maze";
 import {hackTeleporter} from "./teleporter";
+import {solveCoins} from "./coins";
 
-const verbs = "use take drop help inv look go".split(" ");
+const verbs = "use take drop help inv look go save load disasm teleporter vault coins".split(" ");
 
 export class Adventure {
 	public things: string[] = [];
@@ -34,37 +35,68 @@ export class Adventure {
 		this.commands = [
 			command(["!save", "<string>"], (file) => {
 				this.machine.save(file);
-				this.writer.writeLn("saved");
+				this.writer.writeln("\n\nSaved.\n\nWhat do you do?");
+				this.updateState();
 			}),
 			command(["!load", "<string>"], (file) => {
 				this.machine.load(file);
-				this.writer.writeLn("loaded");
+				this.writer.writeln("\n\nLoaded.\n\nWhat do you do?");
+				this.updateState();
 			}),
-			command(["!trace"], () => {
-				this.machine.tracing = !this.machine.tracing;
-				this.writer.writeLn(`tracing ${this.machine.tracing ? "enabled" : "disabled"}`);
-			}),
-			command(["!eval", "<string>"], (arg) => {
-				this.writer.writeLn(eval(arg));
-			}),
+
 			command(["!disasm", "<number>", "<number>"], (line, length) => {
-				this.writer.writeLn(this.machine.disasm(line, length));
+				this.writer.writeln(this.machine.disasm(line, length));
+				this.updateState();
 			}),
 
-			command(["!maze"], () => {
-				solveMaze(this.writer);
+			command(["!vault"], () => {
+				solveVault(this.writer, this.location);
+				this.updateState();
 			}),
 
-			command(["!ackermann"], () => {
-				hackTeleporter(this.writer, this.machine);
+			command(["!teleporter"], () => {
+				hackTeleporter(this.writer, this.location, this.things, this.machine);
+				this.updateState();
 			}),
+
+			command(["!coins"], () => {
+				solveCoins(this.writer, this.location, this.things);
+				this.updateState();
+			}),
+
+			command(["help"], () => {
+				this.writer.writeln(stripMargin`
+				| 
+				| 
+				| !load <file.bin>
+				| 
+				| Load your progress from a .bin file.
+				| !save <file.bin>
+				| 
+				| Save your progress.
+				| !disasm <address> <length>
+				| 
+				| Disassemble the VM's memory.
+				| !vault
+				| 
+				| Solve the vault challenge.
+				| !teleporter
+				| 
+				| Solve the teleporter challenge.
+				| !coins
+				| 
+				| Solve the coins challenge.
+				`);
+				this.runMachine("help\n");
+			})
 		];
 	}
 
 	async run() {
 		this.runMachine('');
 		while (true) {
-			const line = (await this.reader.question("> ")) + "\n";
+
+			const line = (await this.reader.question(`${inverse`${cyan` ${this.location} `}`}${cyan`\u25B6`} `)) + "\n";
 
 			if (!this.commands.some(command => command.do(line)) && !this.runMachine(line)) {
 				break;

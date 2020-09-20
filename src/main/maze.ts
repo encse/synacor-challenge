@@ -1,7 +1,14 @@
 import {stripMargin, Writer} from "./writer";
 
-export function solveMaze(writer: Writer) {
-	const maze = [
+export function solveVault(writer: Writer, location: string) {
+	if (location !== "Vault Lock" && location !== "Vault Antechamber" && location !== "Vault Door"){
+		writer.writeln("");
+		writer.writeln("");
+		writer.writeln("You dont know what to do.");
+		return;
+	}
+
+	const vault = [
 		['*', 8, '-', 1],
 		[4, '*', 11, '*'],
 		['+', 4, '-', 18],
@@ -9,15 +16,14 @@ export function solveMaze(writer: Writer) {
 	];
 
 
-	writer.writeLn(stripMargin`
+	writer.writeln(stripMargin`
 		| 
 		| 
-		| == Solving the maze ==
-		| You take a piece of paper and sketch the layout of the maze:
+		| You take a piece of paper and sketch the layout of the vault:
 		| 
 	`);
 
-	for (const line of maze) {
+	for (const line of vault) {
 		writer.write("          ");
 		for (const col of line) {
 			writer.write(`${col}`.padStart(4, ' '));
@@ -25,11 +31,11 @@ export function solveMaze(writer: Writer) {
 		writer.write("\n");
 	}
 
-	writer.writeLn(stripMargin`
+	writer.writeln(stripMargin`
 		| 
-		| The maze is like a big calculator device. You start at 22 and every other step modifies the value.
+		| The vault is like a big calculator device. The orb stores the current value. Initially it is set to 22 and modified as you walk around.
 		| 
-		| With some trial and error you find the shortest path that ends in the top right corner with the value 30.
+		| With some trial and error you find the shortest path that ends at the Vault Door with the value 30.
 		| You need to go:
 	`);
 
@@ -47,7 +53,7 @@ export function solveMaze(writer: Writer) {
 
 		if (pos.icol == 3 && pos.irow == 0) {
 			if (pos.num == 30) {
-				writer.writeLn("    " + pos.steps.join(", "));
+				writer.writeln("    " + pos.steps.join(", "));
 				break;
 			}
 		} else {
@@ -72,9 +78,9 @@ export function solveMaze(writer: Writer) {
 					continue;
 				}
 				let num = pos.num;
-				const v = maze[irow][icol];
+				const v = vault[irow][icol];
 				if (typeof v == "number") {
-					switch (maze[pos.irow][pos.icol]) {
+					switch (vault[pos.irow][pos.icol]) {
 						case '+':
 							num += v;
 							break;

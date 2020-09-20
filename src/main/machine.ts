@@ -1,4 +1,13 @@
 import * as fs from "fs";
+import {blue, bold, cyan, green, yellow} from "./writer";
+
+export function constant(num: number) {
+	return green`0x${num.toString(16).padStart(4, '0')}`;
+}
+
+export function reg(st: string) {
+	return bold`${blue`${st}`}`;
+}
 
 type Env = {
 	stop: boolean,
@@ -233,17 +242,20 @@ export class Machine {
 	public disasm(ip: number, length: number): string {
 
 		let res = '';
-		const stArg = (x: number) => (x < 32768 ? '0x' + x.toString(16) : "abcdefgh"[x-32768]+'x');
+		const stArg = (x: number) => (x < 32768 ? constant(x) : reg("abcdefgh"[x-32768]+'x'));
 
 		for (let i = 0; i < length; i++) {
 			const op = this.memory[ip];
 			const cmdTemplate = cmds[op]?.asm ?? op.toString(10);
-			const cmd = cmdTemplate
-				.replace("<arg3>", stArg(this.memory[ip+3]))
-				.replace("<arg2>", stArg(this.memory[ip+2]))
-				.replace("<arg1>", stArg(this.memory[ip+1]));
-
-			res += `0x${ip.toString(16).padStart(4, '0')} ${cmd}\n`;
+			const addr = green`0x${ip.toString(16).padStart(4, '0')}`;
+			const cmd = cmdTemplate.split(' ').map((part, i) =>
+				i == 0 ? cyan`${part}` :
+				i == 1 ? stArg(this.memory[ip+1]) :
+				i == 2 ? stArg(this.memory[ip+2]) :
+				i == 3 ? stArg(this.memory[ip+3]) :
+				(() => {throw new Error()})()
+			).join(' ');
+			res += `${addr}  ${cmd}\n`;
 			ip += cmdTemplate.split(' ').length;
 		}
 		return res;
