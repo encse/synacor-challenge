@@ -1,3 +1,3 @@
 import {run} from "./adventure";
 
-run("challenge.bin");
+run("resources/challenge.bin");

@@ -5,8 +5,7 @@
   "main": "index.js",
   "scripts": {
     "compile": "npx tsc",
-    "start": "npm run compile && node -r esm build/index.js ",
-    "test": "npm run compile && npx ts-mocha src/test/**/*.ts"
+    "start": "npm run compile &&  node -r esm build/index.js "
   },
   "author": "",
   "license": "ISC",
