@@ -50,16 +50,29 @@ export class Writer {
 		for(let i =0;i<lines.length;i++) {
 			let line = lines[i];
 			let ichSpace = 0;
+			let escape = false;
+			let nonEscapedChars = 0;
 			for (let ich = 0; ich < line.length; ich++) {
-				if (line[ich] == ' ') {
-					ichSpace = ich;
-				}
-				if (ich > 80) {
-					if (ichSpace > 0) {
-						lines.splice(i + 1, 0, line.substring(ichSpace+1));
-						lines[i] = line.substring(0, ichSpace).trimRight();
+				if (escape) {
+					if (line[ich] == ';') {
+						escape = false;
 					}
-					break;
+				} else {
+					if (line[ich] == '\x1b') {
+						escape = true;
+					} else {
+						nonEscapedChars++;
+						if (line[ich] == ' ') {
+							ichSpace = ich;
+						}
+						if (nonEscapedChars > 80) {
+							if (ichSpace > 0) {
+								lines.splice(i + 1, 0, line.substring(ichSpace + 1));
+								lines[i] = line.substring(0, ichSpace).trimRight();
+							}
+							break;
+						}
+					}
 				}
 			}
 		}

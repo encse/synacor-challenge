@@ -12,6 +12,7 @@
   "license": "ISC",
   "dependencies": {
     "@types/node": "^14.0.13",
+    "asciicast2gif": "^0.2.1",
     "esm": "^3.2.25",
     "intellij-ts-mocha": "git+https://github.com/bjstar/intellij-ts-mocha.git",
     "readline-promise": "^1.0.4",
