@@ -1,5 +1,5 @@
 import {blue, bold, cyan, green} from "../io/writer";
-import {opcodes} from "./opcodes";
+import {operations} from "./operations";
 
 export function constant(num: number) {
 	return green`0x${num.toString(16).padStart(4, '0')}`;
@@ -16,7 +16,7 @@ export function disassemble(memory: Uint16Array, ip: number, length: number): st
 
 	for (let i = 0; i < length; i++) {
 		const op = memory[ip];
-		const cmdTemplate = opcodes[op]?.asm ?? op.toString(10);
+		const cmdTemplate = operations[op]?.asm ?? op.toString(10);
 		const addr = green`0x${ip.toString(16).padStart(4, '0')}`;
 		const cmd = cmdTemplate.split(' ').map((part, i) =>
 			i == 0 ? cyan`${part}` :

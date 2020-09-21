@@ -1,6 +1,6 @@
-import {solveCoins} from "../challenges/coins";
-import {hackTeleporter} from "../challenges/teleporter";
-import {solveVault} from "../challenges/vault";
+import {solveCoins} from "../puzzles/coins";
+import {hackTeleporter} from "../puzzles/teleporter";
+import {solveVault} from "../puzzles/vault";
 import {command} from "./command";
 
 export const solve = command(
@@ -12,7 +12,7 @@ export const solve = command(
 				solveCoins(env.writer, env.location, env.things);
 				break;
 			case "teleporter":
-				hackTeleporter(env.writer, env.location, env.things, env.synachorVm);
+				hackTeleporter(env.writer, env.location, env.things, env.vm);
 				break;
 			case "vault":
 				solveVault(env.writer, env.location);

@@ -1,11 +1,11 @@
 import {Writer} from "../io/writer";
-import {SynachorVm} from "../vm/synachorVm";
+import {Vm} from "../synachor/vm";
 
 type Env = {
 	readonly writer: Writer,
 	readonly things: string[],
 	readonly location: string,
-	readonly synachorVm: SynachorVm,
+	readonly vm: Vm,
 }
 
 type CmdArg = "<number>" | "<string>"

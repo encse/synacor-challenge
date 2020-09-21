@@ -1,9 +1,9 @@
 import {bold, stripMargin, Writer} from "../io/writer";
-import {SynachorVm} from "../vm/synachorVm"
-import {constant, disassemble, reg} from "../vm/disassembler";
+import {Vm} from "../synachor/vm"
+import {constant, disassemble, reg} from "../synachor/disassembler";
 import {checkPrecondition} from "./check";
 
-export function hackTeleporter(writer: Writer, location: string, things: string[], synachorVm: SynachorVm) {
+export function hackTeleporter(writer: Writer, location: string, things: string[], vm: Vm) {
 
 	if (!checkPrecondition(
 		location, ["Synacor Headquarters"],
@@ -44,7 +44,7 @@ export function hackTeleporter(writer: Writer, location: string, things: string[
 		| After some exploration you find the following assembly snippet:
 		| 
 	`);
-	writer.write(disassemble(synachorVm.memory, 0x1566, 20));
+	writer.write(disassemble(vm.memory, 0x1566, 20));
 
 	writer.writeln(stripMargin`
 		| 
@@ -54,10 +54,10 @@ export function hackTeleporter(writer: Writer, location: string, things: string[
 		| 
 	`);
 
-	synachorVm.memory[0x156d] = 6;
-	synachorVm.memory[0x1571] = 21;
-	synachorVm.memory[0x1572] = 21;
-	writer.write(disassemble(synachorVm.memory, 0x156b, 5));
+	vm.memory[0x156d] = 6;
+	vm.memory[0x1571] = 21;
+	vm.memory[0x1572] = 21;
+	writer.write(disassemble(vm.memory, 0x156b, 5));
 
 	writer.writeln(stripMargin`
 		| 
@@ -73,7 +73,7 @@ export function hackTeleporter(writer: Writer, location: string, things: string[
 
 		if (ackermann[4][1] === 6) {
 			writer.writeln("");
-			synachorVm.hx = hx;
+			vm.hx = hx;
 			break;
 		}
 	}

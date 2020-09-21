@@ -1,98 +1,96 @@
 import * as fs from "fs";
 import {disassemble} from "./disassembler";
-import {Opres} from "./opres";
-import {opcodes} from "./opcodes";
+import {operations, OperationResult} from "./operations";
 
-export class SynachorVm {
-	public readonly memory: Uint16Array;
+export class Vm {
+	public readonly memory = new Uint16Array(65536);
 	public tracing = false;
 	public output: string = '';
 	public input: string = '';
 
-	get ax(): number {
+	constructor() {
+		this.ip = 0;
+		this.sp = 65535;
+	}
+
+	public get ax(): number {
 		return this.memory[0x8000];
 	}
 
-	set ax(num: number) {
+	public set ax(num: number) {
 		this.memory[0x8000] = num;
 	}
 
-	get bx(): number {
+	public get bx(): number {
 		return this.memory[0x8001];
 	}
 
-	set bx(num: number) {
+	public set bx(num: number) {
 		this.memory[0x8001] = num;
 	}
 
-	get cx(): number {
+	public get cx(): number {
 		return this.memory[0x8002];
 	}
 
-	set cx(num: number) {
+	public set cx(num: number) {
 		this.memory[0x8002] = num;
 	}
 
-	get dx(): number {
+	public get dx(): number {
 		return this.memory[0x8003];
 	}
 
-	set dx(num: number) {
+	public set dx(num: number) {
 		this.memory[0x8003] = num;
 	}
 
-	get ex(): number {
+	public get ex(): number {
 		return this.memory[0x8004];
 	}
 
-	set ex(num: number) {
+	public set ex(num: number) {
 		this.memory[0x8004] = num;
 	}
 
-	get fx(): number {
+	public get fx(): number {
 		return this.memory[0x8005];
 	}
 
-	set fx(num: number) {
+	public set fx(num: number) {
 		this.memory[0x8005] = num;
 	}
 
-	get gx(): number {
+	public get gx(): number {
 		return this.memory[0x8006];
 	}
 
-	set gx(num: number) {
+	public set gx(num: number) {
 		this.memory[0x8006] = num;
 	}
 
-	get hx(): number {
+	public get hx(): number {
 		return this.memory[0x8007];
 	}
 
-	set hx(num: number) {
+	public set hx(num: number) {
 		this.memory[0x8007] = num;
 	}
 
-	get ip(): number {
+	public get ip(): number {
 		return this.memory[0x8008];
 	}
 
-	set ip(num: number) {
+	public set ip(num: number) {
 		this.memory[0x8008] = num;
 	}
 
-	get sp(): number {
+	public get sp(): number {
 		return this.memory[0x8009];
 	}
 
-	set sp(num: number) {
+	public set sp(num: number) {
 		this.memory[0x8009] = num;
-	}
-
-	constructor() {
-		this.memory = new Uint16Array(65536);
-		this.ip = 0;
-		this.sp = 65535;
 	}
 
 	public save(file: string) {
@@ -105,35 +103,34 @@ export class SynachorVm {
 		this.memory.set(challenge, 0);
 	}
 
-	pop() {
+	public pop() {
 		return this.memory[++this.sp]
 	}
 
-	push(val: number) {
+	public push(val: number) {
 		this.memory[this.sp--] = val;
 	}
-
 
 	public run(input: string): { output: string, stop: boolean } {
 		this.input = input;
 		this.output = '';
-		let opres = Opres.Contine;
-		while (opres == Opres.Contine) {
+		let operationResult = OperationResult.Continue;
+		while (operationResult === OperationResult.Continue) {
 			if (this.tracing) {
 				this.output += disassemble(this.memory, this.ip, 1);
 			}
 
 			let opcode = this.memory[this.ip];
-			const cmd = opcodes[opcode];
-			if (cmd == null) {
+			const operation = operations[opcode];
+			if (operation == null) {
 				this.output += `invalid instruction ${opcode} at ${this.ip.toString(16)}\n`;
-				opres = Opres.Stop;
+				operationResult = OperationResult.Stop;
 			} else {
-				opres = cmd.step(this);
+				operationResult = operation.process(this);
 			}
 		}
 
-		return {output: this.output, stop: opres === Opres.Stop};
+		return {output: this.output, stop: operationResult === OperationResult.Stop};
 	}
 
 }

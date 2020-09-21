@@ -1,3 +1,3 @@
-import {Adventure} from "./adventure";
+import {run} from "./adventure";
 
-new Adventure("challenge.bin").run();
+run("challenge.bin");
