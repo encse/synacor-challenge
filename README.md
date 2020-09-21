@@ -1,10 +1,9 @@
 # Synacor Challenge
 The [Synacor Challenge](https://challenge.synacor.com/) is about implementing a virtual machine and 
-completing a text adventure with a few algorithmic puzzles.
+completing algorithmic puzzles in a text adventure setting.
 
-My implementation is written in TypeScript, because that's what I usually use these days. It's a 
-console application with some standard tricks one would expect, like ANSI colors, text layout 
-(line breaks) and tab completion.
+My implementation is written in TypeScript. It's a 
+console application with the standard tricks one would expect. I added a simple *line break* routine so that words don't wrap in the middle. With the extraction of verbs and items from the game descriptions I could add *tab completion* and text highlight. ANSI colors are used to make the game more *colorful* etc.
 
 ## To run the program
 
