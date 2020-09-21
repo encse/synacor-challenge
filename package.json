@@ -1,11 +1,11 @@
 {
-  "name": "uucp",
+  "name": "synachor",
   "version": "1.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
     "compile": "npx tsc",
-    "start": "npm run compile && node --stack-size=2000000000 -r esm build/index.js ",
+    "start": "npm run compile && node -r esm build/index.js ",
     "test": "npm run compile && npx ts-mocha src/test/**/*.ts"
   },
   "author": "",
