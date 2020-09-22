@@ -18,7 +18,7 @@ const commands = [
         ["help"],
         "This message.",
         () => {
-            writer.write(commands.map(command => `${command.name}\n\n${command.help}\n`).join(""));
+            writer.write(commands.map(command => `${command.name}\n  ${command.help}\n`).join(""));
             runMachine("help\n");
         })
 ];

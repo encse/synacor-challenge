@@ -1,48 +1,14 @@
 import {stripMargin, Writer} from "../io/writer";
 import {checkPrecondition} from "./check";
 
-export function solveVault(writer: Writer, location: string) {
+const vault = [
+    ['*', 8, '-', 1],
+    [4, '*', 11, '*'],
+    ['+', 4, '-', 18],
+    [22, '-', 9, '*']
+];
 
-    if (!checkPrecondition(
-        location, ["Vault Lock", "Vault Antechamber", "Vault Door"],
-        [], [],
-        writer
-    )) {
-        return;
-    }
-
-    const vault = [
-        ['*', 8, '-', 1],
-        [4, '*', 11, '*'],
-        ['+', 4, '-', 18],
-        [22, '-', 9, '*']
-    ];
-
-
-    writer.writeln(stripMargin`
-		| 
-		| 
-		| You take a piece of paper and sketch the layout of the vault:
-		| 
-	`);
-
-    for (const line of vault) {
-        writer.write("          ");
-        for (const col of line) {
-            writer.write(`${col}`.padStart(4, ' '));
-        }
-        writer.write("\n");
-    }
-
-    writer.writeln(stripMargin`
-		| 
-		| It looks like the vault is a big calculator device. The orb stores the current value. Initially it is set to 22 and modified as you walk around.
-		| 
-		| With some trial and error you find the shortest path that ends at the Vault Door with the value 30.
-		| 
-		| You need to go:
-	`);
-
+function getPath(): string[] {
     let pos = {irow: 3, icol: 0, num: 22, steps: [] as string[]};
     const queue = [pos];
     let seen = new Set<string>();
@@ -57,7 +23,7 @@ export function solveVault(writer: Writer, location: string) {
 
         if (pos.icol == 3 && pos.irow == 0) {
             if (pos.num == 30) {
-                writer.writeln("    " + pos.steps.join(", "));
+                return pos.steps;
                 break;
             }
         } else {
@@ -78,9 +44,7 @@ export function solveVault(writer: Writer, location: string) {
                 if (icol == 0 && irow == 3) {
                     continue;
                 }
-                if (pos.steps.length == 12) {
-                    continue;
-                }
+
                 let num = pos.num;
                 const v = vault[irow][icol];
                 if (typeof v == "number") {
@@ -102,4 +66,42 @@ export function solveVault(writer: Writer, location: string) {
             }
         }
     }
+    throw new Error();
+}
+
+export function solveVault(writer: Writer, location: string) {
+
+    if (!checkPrecondition(
+        location, ["Vault Lock", "Vault Antechamber", "Vault Door"],
+        [], [],
+        writer
+    )) {
+        return;
+    }
+
+    writer.writeln(stripMargin`
+        | 
+        | 
+        | You take a piece of paper and sketch the layout of the vault:
+        | 
+    `);
+
+    for (const line of vault) {
+        writer.write("          ");
+        for (const col of line) {
+            writer.write(`${col}`.padStart(4, ' '));
+        }
+        writer.write("\n");
+    }
+
+    writer.writeln(stripMargin`
+        | 
+        | It looks like the vault is a big calculator device. The orb stores the current value. Initially it is set to 22 and modified as you walk around.
+        | 
+        | With some trial and error you find the shortest path that ends at the Vault Door with the value 30.
+        | 
+        | You need to go:
+    `);
+
+    writer.writeln("    " + getPath().join(", "))
 }

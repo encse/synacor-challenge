@@ -8,9 +8,7 @@ export function checkPrecondition(
     if (expectedLocations.indexOf(location) >= 0 && expectedThings.every(expectedThing => things.indexOf(expectedThing) >= 0)) {
         return true;
     } else {
-        writer.writeln("");
-        writer.writeln("");
-        writer.writeln("You don't have an idea at this point.");
+        writer.writeln("\n\nYou don't have an idea at this point.");
         return false;
     }
 }
