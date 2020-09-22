@@ -58,7 +58,7 @@ export class Writer {
             if (i < lines.length - 1) {
                 line += '\n';
                 for (let i = 0; i < 10000000; i++) {
-                    ; //spin
+                    ; // ugly spin
                 }
             }
             process.stdout.write(line);

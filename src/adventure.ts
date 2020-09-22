@@ -14,15 +14,21 @@ const commands = [
     load,
     solve,
     disasm,
-    command(["help"], "This message.", () => {
-        writer.write(commands.map(command => `${command.name}\n\n${command.help}\n`).join(""));
-        runMachine("help\n");
-    })
+    command(
+        ["help"],
+        "This message.",
+        () => {
+            writer.write(commands.map(command => `${command.name}\n\n${command.help}\n`).join(""));
+            runMachine("help\n");
+        })
 ];
 
-const writer = new Writer(
-    () => [...things, ...verbs, ...commands.map(command => command.name), "Grue", "grue"]
-);
+const writer = new Writer(() => [
+    ...things,
+    ...verbs,
+    ...commands.map(command => command.name),
+    ...["Grue", "grue"]
+]);
 
 const reader = new Reader(() => [
     ...verbs,
@@ -36,19 +42,20 @@ let location: string = "";
 function updateState() {
     things = [];
     for (const st of vm.run("look\ninv\n").output.split("\n")) {
-        let rxThing = st.match(/- (.*)/);
-        if (rxThing) {
-            things.push(rxThing[1]);
+        let thingMatch = st.match(/- (.*)/);
+        if (thingMatch) {
+            things.push(thingMatch[1]);
         }
-        let rxLocation = st.match(/== (.*) ==/);
-        if (rxLocation) {
-            location = rxLocation[1];
+        let locationMatch = st.match(/== (.*) ==/);
+        if (locationMatch) {
+            location = locationMatch[1];
         }
     }
 }
 
 function runMachine(line: string) {
     const res = vm.run(line);
+
     if (!res.stop) {
         updateState();
     }
@@ -59,15 +66,16 @@ function runMachine(line: string) {
 }
 
 export async function run(file: string) {
+    writer.writeln(`\x1b[2J\x1b[H`);
     vm.load(file);
     runMachine('');
     while (true) {
 
         const line = (await reader.question(`${inverse`${cyan` ${location} `}`}${cyan`\u25B6`} `)) + "\n";
 
-        const env = {writer: writer, things: things, vm: vm, location: location};
-        let found = commands.some(command => command.do(env, line));
-        if (found) {
+        const env = {writer, things, vm, location};
+        let foundCommand = commands.some(command => command.do(env, line));
+        if (foundCommand) {
             if (line !== "help\n") {
                 writer.writeln("\nWhat do you do?");
             }
