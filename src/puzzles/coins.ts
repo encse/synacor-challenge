@@ -26,7 +26,7 @@ export function solveCoins(writer: Writer, location: string, things: string[]) {
     let solution = '';
     for (const p of perm([2, 3, 5, 7, 9])) {
         if (p[0] + p[1] * p[2] * p[2] + p[3] * p[3] * p[3] - p[4] === 399) {
-            solution = `${bold`${p[0]}`} + ${bold`${p[1]}`} * ${bold`${p[2]}`} ^ 2 + ${bold`${p[3]}`} ^ 3 - ${bold`${p[4]}`} = ${bold`399`}`;
+            solution = `${bold(p[0])} + ${bold(p[1])} * ${bold(p[2])} ^ 2 + ${bold(p[3])} ^ 3 - ${bold(p[4])} = ${bold(399)}`;
             break;
         }
     }
@@ -36,11 +36,11 @@ export function solveCoins(writer: Writer, location: string, things: string[]) {
 		| 
 		| You check the coins one by one. Each has a different symbol on it.
 		| 
-		|   red coin          ${green`two dots`}   ${bold`2`}
-		|   corroded coin   ${green`a triangle`}   ${bold`3`} 
-		|   shiny coin      ${green`a pentagon`}   ${bold`5`} 
-		|   concave coin    ${green`seven dots`}   ${bold`7`}
-		|   blue coin        ${green`nine dots`}   ${bold`9`}
+		|   red coin          ${green("two dots")}   ${bold(2)}
+		|   corroded coin   ${green("a triangle")}   ${bold(3)} 
+		|   shiny coin      ${green("a pentagon")}   ${bold(5)} 
+		|   concave coin    ${green("seven dots")}   ${bold(7)}
+		|   blue coin        ${green("nine dots")}   ${bold(9)}
 		| 
 		| You do some trial and error and figure that the following equality holds:
 		| 

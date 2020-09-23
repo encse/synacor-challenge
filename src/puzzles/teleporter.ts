@@ -4,24 +4,25 @@ import {constant, disassemble, reg} from "../synachor/disassembler";
 import {checkPrecondition} from "./check";
 
 function ackermann(h: number, m: number, n: number): number {
-    let table: number[][] = [];
+    let prevrow = new Uint16Array(0x8000);
+    let row = new Uint16Array(0x8000);
     for (let mT = 0; mT <= m; mT++) {
-        let row: number[] = [];
-        table[mT] = row;
         for (let nT = 0; nT < 0x8000; nT++) {
-
             if (mT == 0) {
-                row.push((nT + 1) & 0x7fff);
+                row[nT] = (nT + 1) & 0x7fff;
             } else if (nT == 0) {
-                row.push(table[mT - 1][h]);
+                row[nT] = prevrow[h];
             } else {
-                row.push(table[mT - 1][table[mT][nT - 1]]);
+                row[nT] = prevrow[row[nT - 1]];
             }
 
             if (mT == m && nT == n) {
-                return table[mT][nT];
+                return row[n];
             }
         }
+        const t = prevrow;
+        prevrow = row;
+        row = t;
     }
     throw new Error("");
 }
@@ -50,7 +51,7 @@ export function solveTeleporter(writer: Writer, location: string, things: string
 
     writer.writeln(stripMargin`
         | 
-        | This must be related to the confirmation process. It seems that the expected result is ${bold`6`} and the process is triggered by the call at ${constant(0x1571)}.
+        | This must be related to the confirmation process. It seems that the expected result is ${bold(6)} and the process is triggered by the call at ${constant(0x1571)}.
         |
         | You patch the routine as:
         | 

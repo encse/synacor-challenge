@@ -6,6 +6,7 @@ import {save} from "./commands/save";
 import {load} from "./commands/load";
 import {solve} from "./commands/solve";
 import {disasm} from "./commands/disasm";
+import {dump} from "./commands/dump";
 
 const verbs = "use take drop help inv look go".split(" ");
 const vm = new Vm();
@@ -14,6 +15,7 @@ const commands = [
     load,
     solve,
     disasm,
+    dump,
     command(
         ["help"],
         "This message.",
@@ -71,7 +73,8 @@ export async function run(file: string) {
     runMachine('');
     while (true) {
 
-        const line = (await reader.question(`${inverse`${cyan` ${location} `}`}${cyan`\u25B6`} `)) + "\n";
+        const prompt = inverse(cyan(` ${location} `)) + cyan(`\u25B6`) + " ";
+        const line = (await reader.question(prompt)) + "\n";
 
         const env = {writer, things, vm, location};
         let foundCommand = commands.some(command => command.do(env, line));

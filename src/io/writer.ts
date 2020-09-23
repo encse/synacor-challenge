@@ -1,11 +1,6 @@
 function ansiBlock(num: number) {
-    return (strings: TemplateStringsArray, ...values: any[]): string => {
-        let s = strings[0];
-        for (let i = 0; i < values.length; i++) {
-            s += values[i];
-            s += strings[i + 1];
-        }
-        return `\x1b[${num}m` + s + '\x1b[0m';
+    return (st: any): string => {
+        return `\x1b[${num}m${st}\x1b[0m`;
     }
 }
 
@@ -33,7 +28,6 @@ export function stripMargin(strings: TemplateStringsArray, ...values: any[]): st
             .join('\n')
     );
 }
-
 
 export class Writer {
 
@@ -101,7 +95,7 @@ export class Writer {
     private highlight(lines: string[], highlights: string[]): string[] {
         for (let i = 0; i < lines.length; i++) {
             for (let h of highlights) {
-                lines[i] = lines[i].replace(new RegExp(h, "g"), bold`$1`);
+                lines[i] = lines[i].replace(new RegExp(h, "g"), bold('$1'));
             }
         }
         return lines;
