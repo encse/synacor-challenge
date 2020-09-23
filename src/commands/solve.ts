@@ -6,13 +6,13 @@ import {command} from "./command";
 export const solve = command(
     ["solve", "<string>"],
     "Use 'solve <puzzle>' to progress further. Parameter can be 'coins' ('solve coins'), 'teleporter' or 'vault'.",
-    (env, param) => {
+    async (env, param) => {
         switch (param) {
             case "coins":
                 solveCoins(env.writer, env.location, env.things);
                 break;
             case "teleporter":
-                solveTeleporter(env.writer, env.location, env.things, env.vm);
+                await solveTeleporter(env.writer, env.location, env.things, env.vm);
                 break;
             case "vault":
                 solveVault(env.writer, env.location);

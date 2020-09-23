@@ -29,7 +29,7 @@ function ackermann(h: number, m: number, n: number): number {
     throw new Error("");
 }
 
-export function solveTeleporter(writer: Writer, location: string, things: string[], vm: Vm) {
+export async function solveTeleporter(writer: Writer, location: string, things: string[], vm: Vm): Promise<void> {
 
     if (!checkPrecondition(
         location, ["Synacor Headquarters"],
@@ -80,6 +80,7 @@ export function solveTeleporter(writer: Writer, location: string, things: string
             vm.hx = hx;
             break;
         }
+        await new Promise(resolve => setTimeout(() => resolve(), 0));
     }
 
     writer.writeln(stripMargin`

@@ -1,5 +1,5 @@
 import {Writer} from "./io/writer";
-import {cyan, inverse} from "./util/ansi";
+import {clearScreen, cyan, goHome, inverse} from "./util/ansi";
 import {Reader} from "./io/reader";
 import {command} from "./commands/command";
 import {Vm} from "./synachor/vm";
@@ -20,7 +20,7 @@ const commands = [
     command(
         ["help"],
         "This message.",
-        () => {
+        async () => {
             writer.write(commands.map(command => `${command.name}\n  ${command.help}\n`).join(""));
             runMachine("help\n");
         })
@@ -69,7 +69,7 @@ function runMachine(line: string) {
 }
 
 export async function run(file: string) {
-    writer.writeln(`\x1b[2J\x1b[H`);
+    writer.writeln(`${clearScreen}${goHome}`);
     vm.load(file);
     runMachine('');
     while (true) {
@@ -78,7 +78,16 @@ export async function run(file: string) {
         const line = (await reader.question(prompt)) + "\n";
 
         const env = {writer, things, vm, location};
-        let foundCommand = commands.some(command => command.do(env, line));
+
+        let foundCommand = false;
+
+        for (let command of commands) {
+            if (await command.do(env, line)) {
+                foundCommand = true;
+                break;
+            }
+        }
+
         if (foundCommand) {
             if (line !== "help\n") {
                 writer.writeln("\nWhat do you do?");

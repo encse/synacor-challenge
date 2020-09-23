@@ -11,17 +11,17 @@ type Env = {
 type CmdArg = "<number>" | "<string>"
 type MapArg<V> =
     V extends "<number>" ? number :
-        V extends "<string>" ? string :
-            never;
+    V extends "<string>" ? string :
+    never;
 
 type MapArgs<Tuple extends [...any[]]> = { [Index in keyof Tuple]: MapArg<Tuple[Index]>; }
 
-export type Cmd = { name: string, help: string, do: (env: Env, line: string) => boolean };
+export type Cmd = { name: string, help: string, do: (env: Env, line: string) => Promise<boolean> };
 
 export function command<K extends CmdArg[]>(
     regex: [string, ...K],
     help: string,
-    on: (env: Env, ...args: [...MapArgs<K>]) => void
+    on: (env: Env, ...args: [...MapArgs<K>]) => Promise<void>
 ): Cmd {
     const matchString = new RegExp(
         "^" +
@@ -29,10 +29,10 @@ export function command<K extends CmdArg[]>(
         regex.slice(1).map(
             arg =>
                 arg === "<string>" ? "\\s+(.*)" :
-                    arg === "<number>" ? "\\s+(0x[0-9a-f]+|\\d+)" :
-                        (() => {
-                            throw new Error("")
-                        })()
+                arg === "<number>" ? "\\s+(0x[0-9a-f]+|\\d+)" :
+                (() => {
+                    throw new Error("")
+                })()
         ).join("") +
         "\n"
     );
@@ -40,7 +40,7 @@ export function command<K extends CmdArg[]>(
     return {
         name: regex[0],
         help,
-        do: (env, line) => {
+        do: async (env, line) => {
 
             const match = line.match(matchString);
             if (match != null) {
@@ -48,11 +48,11 @@ export function command<K extends CmdArg[]>(
                     if (regex[i + 1] == "<number>") {
                         return st.startsWith("0x") ? parseInt(st.substring(2), 16) : parseInt(st, 10);
                     } else {
-                        return st
+                        return st;
                     }
                 });
                 try {
-                    (on as any)(env, ...args);
+                    await on(env, ...args as any);
                 } catch (e) {
                     console.error(e);
                 }
