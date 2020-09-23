@@ -1,4 +1,4 @@
-import {blue, bold, cyan, green} from "../io/writer";
+import {blue, bold, cyan, green} from "../util/ansi";
 import {operations} from "./operations";
 
 export function constant(num: number) {

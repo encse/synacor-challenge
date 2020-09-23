@@ -1,5 +1,6 @@
-import {stripMargin, Writer} from "../io/writer";
+import {Writer} from "../io/writer";
 import {checkPrecondition} from "./check";
+import {stripMargin} from "../util/stripMargin";
 
 const vault = [
     ['*', 8, '-', 1],

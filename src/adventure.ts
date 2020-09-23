@@ -1,4 +1,5 @@
-import {cyan, inverse, Writer} from "./io/writer";
+import {Writer} from "./io/writer";
+import {cyan, inverse} from "./util/ansi";
 import {Reader} from "./io/reader";
 import {command} from "./commands/command";
 import {Vm} from "./synachor/vm";

@@ -1,7 +1,9 @@
-import {bold, stripMargin, Writer} from "../io/writer";
+import {Writer} from "../io/writer";
+import {bold} from "../util/ansi";
 import {Vm} from "../synachor/vm"
 import {constant, disassemble, reg} from "../synachor/disassembler";
 import {checkPrecondition} from "./check";
+import {stripMargin} from "../util/stripMargin";
 
 function ackermann(h: number, m: number, n: number): number {
     let prevrow = new Uint16Array(0x8000);

@@ -1,5 +1,7 @@
-import {bold, green, stripMargin, Writer} from "../io/writer";
+import {bold, green} from "../util/ansi";
+import {Writer} from "../io/writer";
 import {checkPrecondition} from "./check";
+import {stripMargin} from "../util/stripMargin";
 
 function* perm<T>(ts: T[]): Iterable<T[]> {
     if (ts.length == 0) {
