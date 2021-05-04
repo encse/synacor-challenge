@@ -74,7 +74,7 @@ export async function run(file: string) {
     runMachine('');
     while (true) {
 
-        const prompt = inverse(cyan(` ${location} `)) + cyan(`\u25B6`) + " ";
+        const prompt = inverse(cyan(` ${location} `)) + cyan('') + " ";
         const line = (await reader.question(prompt)) + "\n";
 
         const env = {writer, things, vm, location};
